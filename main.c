@@ -1,3 +1,4 @@
+#include "lexer.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -10,31 +11,39 @@ void print_usage() {
   printf("        Shows this menu\n");
 }
 
-void lex(char* path) {
+void lex_thing(char *contents) {
+  TokenArray array;
+  newTokenArrayList(&array);
+
+  deleteTokenArrayList(&array);
+}
+
+void lex(char *path) {
   printf("lex: %s\n", path);
 
   FILE *file = fopen(path, "rb");
-  if (file != NULL) {
-    fseek(file, 0, SEEK_END);
-    long fileSize = ftell(file);
-    rewind(file);
-
-    char *contents = malloc(fileSize + 1);
-    if (contents == NULL) {
-      fprintf(stderr, "Error: Malloc failed when lexing file '%s'.\n", path);
-      exit(1);
-    }
-    fread(contents, fileSize, 1, file);
-    contents[fileSize] = '\0';
-
-    fclose(file);
-
-    printf("%s\n", contents);
-
-    free(contents);
-  } else {
+  if (file == NULL) {
     fprintf(stdout, "Error: File '%s' not found.\n", path);
+    exit(1);
   }
+
+  fseek(file, 0, SEEK_END);
+  long fileSize = ftell(file);
+  rewind(file);
+
+  char *contents = malloc(fileSize + 1);
+  if (contents == NULL) {
+    fprintf(stderr, "Error: Malloc failure.\n");
+    exit(1);
+  }
+
+  fread(contents, fileSize, 1, file);
+  contents[fileSize] = '\0';
+  fclose(file);
+
+  lex_thing(contents);
+
+  free(contents);
 }
 
 int main(int argc, char **argv) {
@@ -48,11 +57,11 @@ int main(int argc, char **argv) {
       return 0;
     } else if (strcmp("-o", argv[i]) == 0) {
       if (i + 1 < argc) {
-	printf("outfile: %s\n", argv[i + 1]);
-	i++;
+        printf("outfile: %s\n", argv[i + 1]);
+        i++;
       } else {
-	fprintf(stderr, "Error: -o must be followed by a file name.\n");
-	return 1;
+        fprintf(stderr, "Error: -o must be followed by a file name.\n");
+        return 1;
       }
     } else {
       lex(argv[i]);
