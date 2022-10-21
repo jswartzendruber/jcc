@@ -20,13 +20,13 @@ int isAlphanumeric(char c) {
 }
 
 void tokenizeFile(TokenArray *array, char *file, long fileLen) {
-  long lineNumber = 0;
+  long line = 1;
   long idx = 0;
 
   while (idx < fileLen) {
     if (file[idx] == ' ' || file[idx] == '\n' || file[idx] == '\t') {
       if (file[idx] == '\n') {
-	lineNumber++;
+	line++;
       }
       idx++;
     } else if (file[idx] == '+') {
@@ -84,7 +84,7 @@ void tokenizeFile(TokenArray *array, char *file, long fileLen) {
 	insert(array, createToken(T_AMPERAMPER, idx, idx + 1));
 	idx += 2;
       } else {
-	fprintf(stderr, "Lexer Error on line %i: Unexpected character '%c'.\n", file[idx]);
+	fprintf(stderr, "Lexer Error on line %ld: Unexpected character '%c'.\n", line, file[idx]);
 	idx++; // TODO: Continue looking for errors? Set some kind of flag?
       }
     } else if (file[idx] == '|') {
@@ -92,7 +92,7 @@ void tokenizeFile(TokenArray *array, char *file, long fileLen) {
 	insert(array, createToken(T_PIPEPIPE, idx, idx + 1));
 	idx += 2;
       } else {
-	fprintf(stderr, "Lexer Error on line %i: Unexpected character '%c'.\n", file[idx]);
+	fprintf(stderr, "Lexer Error on line %ld: Unexpected character '%c'.\n", line, file[idx]);
 	idx++; // TODO: Continue looking for errors? Set some kind of flag?
       }
     } else if (file[idx] == ';') {
@@ -130,7 +130,7 @@ void tokenizeFile(TokenArray *array, char *file, long fileLen) {
 	  if (floating == 0) {
 	    floating = 1;
 	  } else {
-	    fprintf(stderr, "Lexer Error on line %i: Multiple periods found in number.\n", file[idx]);
+	    fprintf(stderr, "Lexer Error on line %ld: Multiple periods found in number.\n", line, file[idx]);
 	    idx++; // TODO: Continue looking for errors? Set some kind of flag?
 	  }
 	} else {
@@ -157,7 +157,7 @@ void tokenizeFile(TokenArray *array, char *file, long fileLen) {
       }
       insert(array, createToken(T_IDENTIFIER, start, idx - 1));
     } else {
-      fprintf(stderr, "Lexer Error on line %i: Unexpected character '%c'.\n", file[idx]);
+      fprintf(stderr, "Lexer Error on line %ld: Unexpected character '%c'.\n", line, file[idx]);
       idx++; // TODO: Continue looking for errors? Set some kind of flag?
     }
   }

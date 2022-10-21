@@ -66,7 +66,7 @@ char *enumToString(TType t) {
   if (t == T_FLOAT) return "T_FLOAT";
   if (t == T_STRING) return "T_STRING";
   if (t == T_IDENTIFIER) return "T_IDENTIFIER";
-return "";
+  return "";
 }
 
 typedef struct {
