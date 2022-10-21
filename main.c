@@ -12,8 +12,6 @@ void print_usage() {
 }
 
 void lex(char *path) {
-  printf("lex: %s\n", path);
-
   FILE *file = fopen(path, "rb");
   if (file == NULL) {
     fprintf(stdout, "Error: File '%s' not found.\n", path);
@@ -41,9 +39,6 @@ void lex(char *path) {
   if (errors > 0) {
     exit(1);
   }
-  for (int i = 0; i < array.len; i++) {
-    printf("%s\n", enumToString(get(&array, i).type));
-  }
 
   deleteTokenArrayList(&array);
   free(contents);
@@ -60,7 +55,7 @@ int main(int argc, char **argv) {
       return 0;
     } else if (strcmp("-o", argv[i]) == 0) {
       if (i + 1 < argc) {
-        printf("outfile: %s\n", argv[i + 1]);
+	// save outfile
         i++;
       } else {
         fprintf(stderr, "Error: -o must be followed by a file name.\n");

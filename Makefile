@@ -8,6 +8,9 @@ $(PROG): $(OBJS)
 
 main.o : lexer.h
 
+test : $(PROG)
+	./runTests.py
+
 .PHONY : clean
 clean :
 	rm $(PROG) $(OBJS)
