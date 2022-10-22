@@ -11,7 +11,7 @@ void print_usage() {
   printf("        Shows this menu\n");
 }
 
-void lex(char *path) {
+void lexAndParseFile(char *path) {
   FILE *file = fopen(path, "rb");
   if (file == NULL) {
     fprintf(stdout, "Error: File '%s' not found.\n", path);
@@ -40,6 +40,11 @@ void lex(char *path) {
     exit(1);
   }
 
+  // Display tokens
+  //  for (int i = 0; i < array.len; i++) {
+  //    printToken(array.data[i], contents);
+  //  }
+
   deleteTokenArrayList(&array);
   free(contents);
 }
@@ -62,7 +67,7 @@ int main(int argc, char **argv) {
         return 1;
       }
     } else {
-      lex(argv[i]);
+      lexAndParseFile(argv[i]);
     }
   }
 

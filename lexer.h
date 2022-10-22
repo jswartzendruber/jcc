@@ -36,6 +36,21 @@ typedef enum {
   T_IDENTIFIER,
 } TType;
 
+typedef struct {
+  TType type;
+  int filePosStart;
+  int filePosEnd;
+} Token;
+
+char* tokenStringValue(char *buff, Token token, char *fileContents) {
+  int j = 0;
+  for (int i = token.filePosStart; i < token.filePosEnd; i++) {
+    buff[j++] = fileContents[i];
+  }
+  buff[j] = '\0';
+  return buff;
+}
+
 char *enumToString(TType t) {
   if (t == T_PLUS) return "T_PLUS";
   if (t == T_MINUS) return "T_MINUS";
@@ -69,11 +84,11 @@ char *enumToString(TType t) {
   return "";
 }
 
-typedef struct {
-  TType type;
-  int filePosStart;
-  int filePosEnd;
-} Token;
+void printToken(Token token, char *fileContents) {
+  long len = token.filePosEnd - token.filePosStart;
+  char buff[len + 1];
+  printf("%s: %s\n", enumToString(token.type), tokenStringValue(buff, token, fileContents));
+}
 
 Token createToken(TType type, int filePosStart, int filePosEnd) {
   Token token;
@@ -147,58 +162,58 @@ int tokenizeFile(TokenArray *array, char *file, long fileLen) {
       }
       idx++;
     } else if (file[idx] == '+') {
-      insert(array, createToken(T_PLUS, idx, idx));
+      insert(array, createToken(T_PLUS, idx, idx + 1));
       idx++;
     } else if (file[idx] == '-') {
-      insert(array, createToken(T_MINUS, idx, idx));
+      insert(array, createToken(T_MINUS, idx, idx + 1));
       idx++;
     } else if (file[idx] == '*') {
-      insert(array, createToken(T_STAR, idx, idx));
+      insert(array, createToken(T_STAR, idx, idx + 1));
       idx++;
     } else if (file[idx] == '/') {
-      insert(array, createToken(T_SLASH, idx, idx));
+      insert(array, createToken(T_SLASH, idx, idx + 1));
       idx++;
     } else if (file[idx] == '%') {
-      insert(array, createToken(T_PERCENT, idx, idx));
+      insert(array, createToken(T_PERCENT, idx, idx + 1));
       idx++;
     } else if (file[idx] == '\\') {
-      insert(array, createToken(T_BACKSLASH, idx, idx));
+      insert(array, createToken(T_BACKSLASH, idx, idx + 1));
       idx++;
     } else if (file[idx] == '<') {
       if (idx + 1 < fileLen && file[idx + 1] == '=') {
-	insert(array, createToken(T_LESSEQUALTHAN, idx, idx + 1));
+	insert(array, createToken(T_LESSEQUALTHAN, idx, idx + 2));
 	idx += 2;
       } else {
-	insert(array, createToken(T_LESSTHAN, idx, idx));
+	insert(array, createToken(T_LESSTHAN, idx, idx + 1));
 	idx++;
       }
     } else if (file[idx] == '>') {
       if (idx + 1 < fileLen && file[idx + 1] == '=') {
-	insert(array, createToken(T_GREATEREQUALTHAN, idx, idx + 1));
+	insert(array, createToken(T_GREATEREQUALTHAN, idx, idx + 2));
 	idx += 2;
       } else {
-	insert(array, createToken(T_GREATERTHAN, idx, idx));
+	insert(array, createToken(T_GREATERTHAN, idx, idx + 1));
 	idx++;
       }
     } else if (file[idx] == '=') {
       if (idx + 1 < fileLen && file[idx + 1] == '=') {
-	insert(array, createToken(T_EQUALEQUAL, idx, idx + 1));
+	insert(array, createToken(T_EQUALEQUAL, idx, idx + 2));
 	idx += 2;
       } else {
-	insert(array, createToken(T_EQUAL, idx, idx));
+	insert(array, createToken(T_EQUAL, idx, idx + 1));
 	idx++;
       }
     } else if (file[idx] == '!') {
       if (idx + 1 < fileLen && file[idx + 1] == '=') {
-	insert(array, createToken(T_BANGEQUAL, idx, idx + 1));
+	insert(array, createToken(T_BANGEQUAL, idx, idx + 2));
 	idx += 2;
       } else {
-	insert(array, createToken(T_BANG, idx, idx));
+	insert(array, createToken(T_BANG, idx, idx + 1));
 	idx++;
       }
     } else if (file[idx] == '&') {
       if (idx + 1 < fileLen && file[idx + 1] == '&') {
-	insert(array, createToken(T_AMPERAMPER, idx, idx + 1));
+	insert(array, createToken(T_AMPERAMPER, idx, idx + 2));
 	idx += 2;
       } else {
 	fprintf(stderr, "Lexer Error on line %ld: Unexpected character '%c'.\n", line, file[idx]);
@@ -207,7 +222,7 @@ int tokenizeFile(TokenArray *array, char *file, long fileLen) {
       }
     } else if (file[idx] == '|') {
       if (idx + 1 < fileLen && file[idx + 1] == '|') {
-	insert(array, createToken(T_PIPEPIPE, idx, idx + 1));
+	insert(array, createToken(T_PIPEPIPE, idx, idx + 2));
 	idx += 2;
       } else {
 	fprintf(stderr, "Lexer Error on line %ld: Unexpected character '%c'.\n", line, file[idx]);
@@ -215,31 +230,31 @@ int tokenizeFile(TokenArray *array, char *file, long fileLen) {
 	idx++; // TODO: Continue looking for errors? Set some kind of flag?
       }
     } else if (file[idx] == ';') {
-      insert(array, createToken(T_SEMICOLON, idx, idx));
+      insert(array, createToken(T_SEMICOLON, idx, idx + 1));
       idx++;
     } else if (file[idx] == ',') {
-      insert(array, createToken(T_COMMA, idx, idx));
+      insert(array, createToken(T_COMMA, idx, idx + 1));
       idx++;
     } else if (file[idx] == '.') {
-      insert(array, createToken(T_DOT, idx, idx));
+      insert(array, createToken(T_DOT, idx, idx + 1));
       idx++;
     } else if (file[idx] == '[') {
-      insert(array, createToken(T_LBRACKET, idx, idx));
+      insert(array, createToken(T_LBRACKET, idx, idx + 1));
       idx++;
     } else if (file[idx] == ']') {
-      insert(array, createToken(T_RBRACKET, idx, idx));
+      insert(array, createToken(T_RBRACKET, idx, idx + 1));
       idx++;
     } else if (file[idx] == '(') {
-      insert(array, createToken(T_LPAREN, idx, idx));
+      insert(array, createToken(T_LPAREN, idx, idx + 1));
       idx++;
     } else if (file[idx] == ')') {
-      insert(array, createToken(T_RPAREN, idx, idx));
+      insert(array, createToken(T_RPAREN, idx, idx + 1));
       idx++;
     } else if (file[idx] == '{') {
-      insert(array, createToken(T_LCURLY, idx, idx));
+      insert(array, createToken(T_LCURLY, idx, idx + 1));
       idx++;
     } else if (file[idx] == '}') {
-      insert(array, createToken(T_RCURLY, idx, idx));
+      insert(array, createToken(T_RCURLY, idx, idx + 1));
       idx++;
     } else if (isDigit(file[idx]) == 1) {
       long start = idx;
@@ -251,16 +266,15 @@ int tokenizeFile(TokenArray *array, char *file, long fileLen) {
 	  } else {
 	    fprintf(stderr, "Lexer Error on line %ld: Multiple periods found in number.\n", line, file[idx]);
 	    errors++;
-	    idx++; // TODO: Continue looking for errors? Set some kind of flag?
+	    // TODO: Continue looking for errors? Set some kind of flag?
 	  }
-	} else {
-	  idx++;
 	}
+	idx++;
       }
       if (floating) {
-	insert(array, createToken(T_FLOAT, start, idx - 1));
+	insert(array, createToken(T_FLOAT, start, idx));
       } else {
-	insert(array, createToken(T_INTEGER, start, idx - 1));
+	insert(array, createToken(T_INTEGER, start, idx));
       }
     } else if (file[idx] == '"') {
       long start = idx;
@@ -268,14 +282,14 @@ int tokenizeFile(TokenArray *array, char *file, long fileLen) {
       while (idx < fileLen && file[idx] != '"') {
 	idx++;
       }
-      insert(array, createToken(T_STRING, start, idx));
       idx++;
+      insert(array, createToken(T_STRING, start, idx));
     } else if (isAlphanumeric(file[idx])) {
       long start = idx;
       while (idx < fileLen && (isAlphanumeric(file[idx]) || file[idx] == '_')) {
 	idx++;
       }
-      insert(array, createToken(T_IDENTIFIER, start, idx - 1));
+      insert(array, createToken(T_IDENTIFIER, start, idx));
     } else {
       fprintf(stderr, "Lexer Error on line %ld: Unexpected character '%c'.\n", line, file[idx]);
       errors++;
