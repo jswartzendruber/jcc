@@ -1,12 +1,13 @@
 PROG := jcc
 CC := gcc
+WARNINGS := -fsanitize=address -Wall -Wextra -pedantic -Wshadow
 
-OBJS = main.o
+OBJS = main.o lexer.o parser.o
 
 $(PROG): $(OBJS)
-	$(CC) -fsanitize=address $(OBJS) -o $(PROG)
+	$(CC) $(WARNINGS) $(OBJS) -o $(PROG)
 
-main.o : lexer.h
+main.o : lexer.h parser.h
 
 test : $(PROG)
 	./runTests.py

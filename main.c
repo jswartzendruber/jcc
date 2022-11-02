@@ -1,4 +1,5 @@
 #include "lexer.h"
+#include "parser.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -11,7 +12,7 @@ void print_usage() {
   printf("        Shows this menu\n");
 }
 
-void lexAndParseFile(char *path) {
+void lexFile(char *path) {
   FILE *file = fopen(path, "rb");
   if (file == NULL) {
     fprintf(stdout, "Error: File '%s' not found.\n", path);
@@ -32,20 +33,24 @@ void lexAndParseFile(char *path) {
   contents[fileSize] = '\0';
   fclose(file);
 
-  TokenArray array;
-  newTokenArrayList(&array);
+  TokenArray tokens;
+  newTokenArrayList(&tokens);
 
-  int errors = tokenizeFile(&array, contents, fileSize);
+  int errors = tokenizeFile(&tokens, contents, fileSize);
   if (errors > 0) {
     exit(1);
   }
 
   // Display tokens
-  //  for (int i = 0; i < array.len; i++) {
-  //    printToken(array.data[i], contents);
-  //  }
+  /* for (int i = 0; i < array.len; i++) { */
+  /*   printToken(tokens.data[i], contents); */
+  /* } */
 
-  deleteTokenArrayList(&array);
+  ExprTree *tree = parseFile(&tokens);
+  //printExprTree(tree, 0);
+  freeExprTree(tree);
+
+  deleteTokenArrayList(&tokens);
   free(contents);
 }
 
@@ -67,7 +72,7 @@ int main(int argc, char **argv) {
         return 1;
       }
     } else {
-      lexAndParseFile(argv[i]);
+      lexFile(argv[i]);
     }
   }
 

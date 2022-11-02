@@ -1,0 +1,7 @@
+Program <- Statement
+
+Statement <- "return" Expr ";"
+
+Expr <- Term { ( "+" | "-" ) Term }
+Term <- Factor { ( "*" | "/" ) Factor }
+Factor <- Number | "(" Expr ")"
