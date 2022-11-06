@@ -28,14 +28,6 @@ ExprTree *makeTreeNode(ExprNode node) {
   return tree;
 }
 
-// maybe just use the primitives functions?
-ExprTree *makeExprLeaf(Operation op, long long int lhs, long long int rhs) {
-  ExprTree *tree = makeTreeNode(makeOpNode(op));
-  tree->right = makeTreeNode(makeValNode(rhs));
-  tree->left = makeTreeNode(makeValNode(lhs));
-  return tree;
-}
-
 ExprTree *makeExprTree(ExprTree *left, Operation op, ExprTree *right) {
   ExprTree *tree = makeTreeNode(makeOpNode(op));
   tree->right = right;
@@ -75,14 +67,13 @@ ExprTree *parseTerm(TokenArray *tokens, char *fileContents) {
   ExprTree *lhs = parseFactor(tokens, fileContents);
 
   while (current(tokens, fileContents).type == T_SLASH || current(tokens, fileContents).type == T_STAR) {
-    Token currToken = current(tokens, fileContents);
+    Token currToken = advance(tokens, fileContents);
     Operation op;
     if (currToken.type == T_SLASH) {
       op = Div;
     } else {
       op = Mul;
     }
-    advance(tokens, fileContents); // Operation
     ExprTree *rhs = parseFactor(tokens, fileContents);
 
     lhs = makeExprTree(lhs, op, rhs);
@@ -95,14 +86,13 @@ ExprTree *parseExpr(TokenArray *tokens, char *fileContents) {
   ExprTree *lhs = parseTerm(tokens, fileContents);
 
   while (current(tokens, fileContents).type == T_PLUS || current(tokens, fileContents).type == T_MINUS) {
-    Token currToken = current(tokens, fileContents);
+    Token currToken = advance(tokens, fileContents);
     Operation op;
     if (currToken.type == T_PLUS) {
       op = Add;
     } else {
       op = Sub;
     }
-    advance(tokens, fileContents); // Operation
     ExprTree *rhs = parseTerm(tokens, fileContents);
 
     lhs = makeExprTree(lhs, op, rhs);
@@ -111,17 +101,60 @@ ExprTree *parseExpr(TokenArray *tokens, char *fileContents) {
   return lhs;
 }
 
-ExprTree *parseFile(TokenArray *tokens) {
-  TokenArray expr;
-  newTokenArrayList(&expr);
-  char *backing = "3 * (4 + 1) / 6";
-  tokenizeFile(&expr, backing, strlen(backing));
-  ExprTree *ex = parseExpr(&expr, backing);
-  printExprTree(ex, 0);
+TType parseTypeSpecifier(TokenArray *tokens, char *fileContents) {
+  return advance(tokens, fileContents).type;
+}
 
-  deleteTokenArrayList(&expr);
+char *parseIdentifier(TokenArray *tokens, char *fileContents) {
+  Token token = advance(tokens, fileContents);
+  int len = token.filePosEnd - token.filePosStart;
+  char *ident = malloc(len);
+  memcpy(ident, &fileContents[token.filePosStart], len);
+  ident[len] = '\0';
+  return ident;
+}
 
-  return ex;
+Statement parseStatement(TokenArray *tokens, char *fileContents) {
+  // Return statement
+  Token tok = advance(tokens, fileContents);
+  if (tok.type != K_RETURN) {
+    fprintf(stdout, "Error: Expected 'return'");
+    exit(1);
+  }
+  ExprTree *expr = parseExpr(tokens, fileContents);
+  if (advance(tokens, fileContents).type != T_SEMICOLON) {
+    fprintf(stdout, "Error: Expected ';'");
+    exit(1);
+  }
+
+  Statement statement;
+  statement.ret.val = expr;
+  return statement;
+}
+
+ExprTree *parseFunctionDeclaration(TokenArray *tokens, char *fileContents) {
+  int returnType = parseTypeSpecifier(tokens, fileContents);
+  char *functionName = parseIdentifier(tokens, fileContents);
+  free(functionName); // TODO: REMOVE THIS TEMPORARY SANITIZER SILENCER
+
+  if (advance(tokens, fileContents).type != T_LPAREN) {
+    fprintf(stdout, "Error: Expected '('");
+    exit(1);
+  }
+  if (advance(tokens, fileContents).type != T_RPAREN) {
+    fprintf(stdout, "Error: Expected ')'");
+    exit(1);
+  }
+  if (advance(tokens, fileContents).type != T_LCURLY) {
+    fprintf(stdout, "Error: Expected '{'");
+    exit(1);
+  }
+
+  Statement statement = parseStatement(tokens, fileContents);
+}
+
+ExprTree *parseFile(TokenArray *tokens, char *fileContents) {
+  return parseFunctionDeclaration(tokens, fileContents);
 }
 
 void printExprTree(ExprTree *tree, int indent) {

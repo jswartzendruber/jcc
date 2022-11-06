@@ -42,12 +42,13 @@ void lexFile(char *path) {
   }
 
   // Display tokens
-  /* for (int i = 0; i < array.len; i++) { */
-  /*   printToken(tokens.data[i], contents); */
+  /* for (int i = 0; i < tokens.len; i++) { */
+  /*   printf("%i: ", i); printToken(tokens.data[i], contents); */
   /* } */
+  /* printf("\n"); */
 
-  ExprTree *tree = parseFile(&tokens);
-  //printExprTree(tree, 0);
+  ExprTree *tree = parseFile(&tokens, contents);
+  printExprTree(tree, 0);
   freeExprTree(tree);
 
   deleteTokenArrayList(&tokens);

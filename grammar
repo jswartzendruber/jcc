@@ -1,4 +1,8 @@
-Program <- Statement
+Program <- FunctionDeclaration
+
+Identifier <- [a-Z] { ([a-Z] | [0-9] }*
+TypeSpecifier <- "int"
+FunctionDeclaration <- TypeSpecifier Identifier "()" "{" Statement "}"
 
 Statement <- "return" Expr ";"
 

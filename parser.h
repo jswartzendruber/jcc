@@ -32,11 +32,18 @@ typedef struct ExprTree {
   ExprNode node;
 } ExprTree;
 
-ExprTree *makeExprLeaf(Operation op, long long int lhs, long long int rhs);
+typedef struct Return {
+  ExprTree *val;
+} Return;
+
+typedef union Statement {
+  Return ret;
+} Statement;
+
 ExprTree *makeExprTree(ExprTree *left, Operation op, ExprTree *right);
 void printExprTree(ExprTree *tree, int indent);
 void freeExprTree(ExprTree *tree);
-ExprTree *parseFile(TokenArray *tokens);
+ExprTree *parseFile(TokenArray *tokens, char *fileContents);
 ExprTree *parseExpr(TokenArray *tokens, char *fileContents);
 
 #endif

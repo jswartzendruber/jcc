@@ -15,6 +15,8 @@ typedef enum {
   T_INTEGER,
   T_RETURN,
   T_IDENTIFIER,
+  K_INT,
+  K_RETURN,
 } TType;
 
 typedef struct {

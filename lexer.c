@@ -26,6 +26,8 @@ char *enumToString(TType t) {
   if (t == T_INTEGER) return "T_INTEGER";
   if (t == T_RETURN) return "T_RETURN";
   if (t == T_IDENTIFIER) return "T_IDENTIFIER";
+  if (t == K_INT) return "K_INT";
+  if (t == K_RETURN) return "K_RETURN";
   return "UNKNOWN";
 }
 
@@ -114,6 +116,15 @@ int isAlphanumeric(char c) {
   return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
 }
 
+int matchKeyword(char *str) {
+  if (strcmp(str, "int") == 0)
+    return K_INT;
+  else if (strcmp(str, "return") == 0)
+    return K_RETURN;
+
+  return -1;
+}
+
 int tokenizeFile(TokenArray *array, char *file, long fileLen) {
   long line = 1;
   long idx = 0;
@@ -166,7 +177,16 @@ int tokenizeFile(TokenArray *array, char *file, long fileLen) {
       while (idx < fileLen && (isAlphanumeric(file[idx]) || isDigit(file[idx]))) {
 	idx++;
       }
-      insert(array, createToken(T_IDENTIFIER, start, idx));
+
+      char ident[idx - start];
+      memcpy(ident, &file[start], idx - start);
+      ident[idx - start] = '\0';
+      int keyword = matchKeyword(ident);
+
+      if (keyword != -1)
+	insert(array, createToken(keyword, start, idx));
+      else
+	insert(array, createToken(T_IDENTIFIER, start, idx));
     } else {
       fprintf(stdout, "Lexer Error on line %ld: Unexpected character '%c'.\n", line, file[idx]);
       errors++;
