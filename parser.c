@@ -4,6 +4,15 @@
 #include <stdlib.h>
 #include <string.h>
 
+Token expect(TokenArray *tokens, char *fileContents, TType expected, char* errorMsg) {
+  Token tok = advance(tokens, fileContents);
+  if (tok.type != expected) {
+    fprintf(stdout, errorMsg);
+    exit(1);
+  }
+  return tok;
+}
+
 ExprNode makeValNode(long long int value) {
   ExprNode node;
   node.exprNode.value = value;
@@ -28,6 +37,18 @@ ExprTree *makeTreeNode(ExprNode node) {
   return tree;
 }
 
+AST *makeFunctionDeclaration(TType returnType, char *functionName, Statement statement) {
+  AST *func = malloc(sizeof(AST));
+  if (func != NULL) {
+    func->node.type = returnType;
+    func->node.name = functionName;
+    func->node.statement = statement;
+    func->right = NULL;
+    func->left = NULL;
+  }
+  return func;
+}
+
 ExprTree *makeExprTree(ExprTree *left, Operation op, ExprTree *right) {
   ExprTree *tree = makeTreeNode(makeOpNode(op));
   tree->right = right;
@@ -43,6 +64,17 @@ void freeExprTree(ExprTree *tree) {
   }
 }
 
+void freeAST(AST *ast) {
+  // Function declaration
+  if (ast != NULL) {
+    free(ast->node.name);
+    freeExprTree(ast->node.statement.ret.val);
+    freeAST(ast->right);
+    freeAST(ast->left);
+    free(ast);
+  }
+}
+
 ExprTree *parseFactor(TokenArray *tokens, char *fileContents) {
   Token currToken = advance(tokens, fileContents);
 
@@ -50,13 +82,8 @@ ExprTree *parseFactor(TokenArray *tokens, char *fileContents) {
     return makeTreeNode(makeValNode(getTokenIntValue(currToken, fileContents)));
   } else if (currToken.type == T_LPAREN) {
     ExprTree *expr = parseExpr(tokens, fileContents);
-    Token rParen = advance(tokens, fileContents);
-    if (rParen.type == T_RPAREN) {
-      return expr;
-    } else {
-      fprintf(stdout, "Error: Expected '('");
-      exit(1);
-    }
+    expect(tokens, fileContents, T_RPAREN, "Error: Expected ')'");
+    return expr;
   } else {
     fprintf(stdout, "Error: Expected factor.");
     exit(1);
@@ -108,7 +135,7 @@ TType parseTypeSpecifier(TokenArray *tokens, char *fileContents) {
 char *parseIdentifier(TokenArray *tokens, char *fileContents) {
   Token token = advance(tokens, fileContents);
   int len = token.filePosEnd - token.filePosStart;
-  char *ident = malloc(len);
+  char *ident = malloc(len + 1);
   memcpy(ident, &fileContents[token.filePosStart], len);
   ident[len] = '\0';
   return ident;
@@ -116,45 +143,39 @@ char *parseIdentifier(TokenArray *tokens, char *fileContents) {
 
 Statement parseStatement(TokenArray *tokens, char *fileContents) {
   // Return statement
-  Token tok = advance(tokens, fileContents);
-  if (tok.type != K_RETURN) {
-    fprintf(stdout, "Error: Expected 'return'");
-    exit(1);
-  }
+  Token tok = expect(tokens, fileContents, K_RETURN, "Error: Expected 'return'");
   ExprTree *expr = parseExpr(tokens, fileContents);
-  if (advance(tokens, fileContents).type != T_SEMICOLON) {
-    fprintf(stdout, "Error: Expected ';'");
-    exit(1);
-  }
+  expect(tokens, fileContents, T_SEMICOLON, "Error: Expected ';'");
 
   Statement statement;
   statement.ret.val = expr;
   return statement;
 }
 
-ExprTree *parseFunctionDeclaration(TokenArray *tokens, char *fileContents) {
+AST *parseFunctionDeclaration(TokenArray *tokens, char *fileContents) {
   int returnType = parseTypeSpecifier(tokens, fileContents);
   char *functionName = parseIdentifier(tokens, fileContents);
-  free(functionName); // TODO: REMOVE THIS TEMPORARY SANITIZER SILENCER
 
-  if (advance(tokens, fileContents).type != T_LPAREN) {
-    fprintf(stdout, "Error: Expected '('");
-    exit(1);
-  }
-  if (advance(tokens, fileContents).type != T_RPAREN) {
-    fprintf(stdout, "Error: Expected ')'");
-    exit(1);
-  }
-  if (advance(tokens, fileContents).type != T_LCURLY) {
-    fprintf(stdout, "Error: Expected '{'");
-    exit(1);
-  }
+  expect(tokens, fileContents, T_LPAREN, "Error: Expected '('");
+  // TODO: function arguments
+  expect(tokens, fileContents, T_RPAREN, "Error: Expected ')'");
+  expect(tokens, fileContents, T_LCURLY, "Error: Expected '{'");
 
   Statement statement = parseStatement(tokens, fileContents);
+  return makeFunctionDeclaration(returnType, functionName, statement);
 }
 
-ExprTree *parseFile(TokenArray *tokens, char *fileContents) {
+AST *parseFile(TokenArray *tokens, char *fileContents) {
   return parseFunctionDeclaration(tokens, fileContents);
+}
+
+void printAST(AST *ast, int indent) {
+  // Function declaration
+  printf("%s %s:\n", enumToString(ast->node.type), ast->node.name);
+  indent++;
+  // Statement
+  printf("%*sreturn\n", indent++, "");
+  printExprTree(ast->node.statement.ret.val, indent);
 }
 
 void printExprTree(ExprTree *tree, int indent) {

@@ -40,10 +40,40 @@ typedef union Statement {
   Return ret;
 } Statement;
 
+typedef struct FunctionDeclaration {
+  TType type;
+  char *name;
+  Statement statement;
+} FunctionDeclaration;
+
+typedef struct AST {
+  struct AST *right;
+  struct AST *left;
+  FunctionDeclaration node;
+} AST;
+
+/*
+typedef struct Quadruple {
+  int target;
+  int op;
+  int arg1;
+  int arg2;
+} Quadruple;
+
+typedef struct TAC {
+  Quadruple *data;
+  int maxSize;
+  int current;
+  int len;
+} TAC;
+*/
+
 ExprTree *makeExprTree(ExprTree *left, Operation op, ExprTree *right);
 void printExprTree(ExprTree *tree, int indent);
+void printAST(AST *ast, int indent);
 void freeExprTree(ExprTree *tree);
-ExprTree *parseFile(TokenArray *tokens, char *fileContents);
+void freeAST(AST *ast);
+AST *parseFile(TokenArray *tokens, char *fileContents);
 ExprTree *parseExpr(TokenArray *tokens, char *fileContents);
 
 #endif

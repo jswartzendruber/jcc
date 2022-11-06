@@ -47,9 +47,9 @@ void lexFile(char *path) {
   /* } */
   /* printf("\n"); */
 
-  ExprTree *tree = parseFile(&tokens, contents);
-  printExprTree(tree, 0);
-  freeExprTree(tree);
+  AST *ast = parseFile(&tokens, contents);
+  printAST(ast, 0);
+  freeAST(ast);
 
   deleteTokenArrayList(&tokens);
   free(contents);
