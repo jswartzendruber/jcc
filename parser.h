@@ -61,25 +61,40 @@ typedef union TACUnion {
   int integerConstant;
 } TACUnion;
 
-typedef enum TACType {
+typedef enum TACQuadrupleType {
   TACRegister,
   TACInteger,
-} TACType;
+} TACQuadrupleType;
 
-typedef struct TACValue {
+typedef struct TACOperandValue {
   TACUnion val;
-  TACType type;
-} TACValue;
+  TACQuadrupleType type;
+} TACOperandValue;
 
-typedef struct Quadruple {
+typedef struct TACQuadruple {
   VirtualRegister target;
   Operation op;
-  TACValue arg1;
-  TACValue arg2;
-} Quadruple;
+  TACOperandValue arg1;
+  TACOperandValue arg2;
+} TACQuadruple;
+
+typedef union TACValue {
+  TACQuadruple quad;
+  char* label;
+} TACValue;
+
+typedef enum TACType {
+  Quadruple,
+  Label
+} TACType;
+
+typedef struct TAC {
+  TACValue val;
+  TACType type;
+} TAC;
 
 typedef struct TACList {
-  Quadruple *data;
+  TAC *data;
   int maxSize;
   int current;
   int len;

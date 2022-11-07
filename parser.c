@@ -6,7 +6,7 @@
 
 void newTACList(TACList *list) {
   int startingSize = 32;
-  list->data = malloc(sizeof(Quadruple) * startingSize);
+  list->data = malloc(sizeof(TAC) * startingSize);
   if (list->data == NULL) {
     fprintf(stdout, "Error: Malloc failure.\n");
     exit(1);
@@ -19,13 +19,13 @@ void newTACList(TACList *list) {
 
 void freeTACList(TACList *list) { free(list->data); }
 
-void insertTAC(TACList *list, Quadruple quad) {
+void insertTAC(TACList *list, TAC value) {
   if (list->len < list->maxSize) {
-    list->data[list->len++] = quad;
+    list->data[list->len++] = value;
   } else {
     list->maxSize *= 2;
-    list->data = realloc(list->data, list->maxSize * sizeof(Quadruple));
-    list->data[list->len++] = quad;
+    list->data = realloc(list->data, list->maxSize * sizeof(TAC));
+    list->data[list->len++] = value;
     if (list->data == NULL) {
       fprintf(stdout, "Error: Realloc failure.\n");
       exit(1);
@@ -33,7 +33,7 @@ void insertTAC(TACList *list, Quadruple quad) {
   }
 }
 
-Quadruple getTAC(TACList *list, int idx) {
+TAC getTAC(TACList *list, int idx) {
   if (idx < list->len) {
     return list->data[idx];
   } else {
@@ -45,7 +45,7 @@ Quadruple getTAC(TACList *list, int idx) {
 Token expect(TokenList *tokens, char *fileContents, TType expected, char* errorMsg) {
   Token tok = advance(tokens, fileContents);
   if (tok.type != expected) {
-    fprintf(stdout, errorMsg);
+    fprintf(stdout, "%s", errorMsg);
     exit(1);
   }
   return tok;
@@ -207,12 +207,37 @@ AST *parseFile(TokenList *tokens, char *fileContents) {
   return parseFunctionDeclaration(tokens, fileContents);
 }
 
+/* TAC newTACQuad() { */
+/*   TAC value; */
+/*   Quadruple quad; */
+
+/*   return value; */
+/* } */
+
+TAC newTACLabel(char *label) {
+  TAC value;
+  value.type = Label;
+  value.val.label = label;
+  return value;
+}
+
+void generateExprTAC(TACList *list, ExprTree *expr) {
+  printExprTree(expr, 0);
+}
+
+void generateStatementTAC(TACList *list, Statement statement) {
+  // Do we need a TAC for BeginFunc n (stack space), EndFunc?
+  // I believe n includes space for callee saved registers.
+  generateExprTAC(list, statement.ret.val);
+}
+
 void generateTAC(TACList *list, AST *ast) {
   newTACList(list);
 
   // Generate main
   if (strcmp(ast->node.name, "main") == 0) {
-    // where do labels fit into our quadruples? more unions!
+    insertTAC(list, newTACLabel(ast->node.name));
+    generateStatementTAC(list, ast->node.statement);
   }
 }
 
@@ -239,6 +264,6 @@ void printExprTree(ExprTree *tree, int indent) {
     printExprTree(tree->left, indent);
     printExprTree(tree->right, indent);
   } else {
-    printf("%*s%i\n", indent, "", tree->node.exprNode.value);
+    printf("%*s%li\n", indent, "", tree->node.exprNode.value);
   }
 }
