@@ -30,19 +30,19 @@ typedef struct {
   int maxSize;
   int current;
   int len;
-} TokenArray;
+} TokenList;
 
-void newTokenArrayList(TokenArray *array);
-int tokenizeFile(TokenArray *array, char *file, long fileLen);
-Token get(TokenArray *array, int idx);
-void deleteTokenArrayList(TokenArray *array);
+void newTokenList(TokenList *list);
+int tokenizeFile(TokenList *list, char *file, long fileLen);
+Token getTokenList(TokenList *list, int idx);
+void freeTokenList(TokenList *list);
 void printToken(Token token, char *fileContents);
 Token createToken(TType type, int filePosStart, int filePosEnd);
 char *enumToString(TType t);
 char *tokenStringValue(char *buff, Token token, char *fileContents);
-void insert(TokenArray *array, Token token);
+void insertTokenList(TokenList *list, Token token);
 int getTokenIntValue(Token token, char *fileContents);
-Token advance(TokenArray *array, char* fileContents);
-Token current(TokenArray *array, char* fileContents);
+Token advance(TokenList *list, char* fileContents);
+Token current(TokenList *list, char* fileContents);
 
 #endif

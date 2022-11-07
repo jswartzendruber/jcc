@@ -4,7 +4,45 @@
 #include <stdlib.h>
 #include <string.h>
 
-Token expect(TokenArray *tokens, char *fileContents, TType expected, char* errorMsg) {
+void newTACList(TACList *list) {
+  int startingSize = 32;
+  list->data = malloc(sizeof(Quadruple) * startingSize);
+  if (list->data == NULL) {
+    fprintf(stdout, "Error: Malloc failure.\n");
+    exit(1);
+  }
+
+  list->maxSize = startingSize;
+  list->current = 0;
+  list->len = 0;
+}
+
+void freeTACList(TACList *list) { free(list->data); }
+
+void insertTAC(TACList *list, Quadruple quad) {
+  if (list->len < list->maxSize) {
+    list->data[list->len++] = quad;
+  } else {
+    list->maxSize *= 2;
+    list->data = realloc(list->data, list->maxSize * sizeof(Quadruple));
+    list->data[list->len++] = quad;
+    if (list->data == NULL) {
+      fprintf(stdout, "Error: Realloc failure.\n");
+      exit(1);
+    }
+  }
+}
+
+Quadruple getTAC(TACList *list, int idx) {
+  if (idx < list->len) {
+    return list->data[idx];
+  } else {
+    fprintf(stderr, "Panic: List out of bounds!");
+    abort();
+  }
+}
+
+Token expect(TokenList *tokens, char *fileContents, TType expected, char* errorMsg) {
   Token tok = advance(tokens, fileContents);
   if (tok.type != expected) {
     fprintf(stdout, errorMsg);
@@ -13,7 +51,7 @@ Token expect(TokenArray *tokens, char *fileContents, TType expected, char* error
   return tok;
 }
 
-ExprNode makeValNode(long long int value) {
+ExprNode makeValNode(long value) {
   ExprNode node;
   node.exprNode.value = value;
   node.type = Integer;
@@ -75,7 +113,7 @@ void freeAST(AST *ast) {
   }
 }
 
-ExprTree *parseFactor(TokenArray *tokens, char *fileContents) {
+ExprTree *parseFactor(TokenList *tokens, char *fileContents) {
   Token currToken = advance(tokens, fileContents);
 
   if (currToken.type == T_INTEGER) {
@@ -90,7 +128,7 @@ ExprTree *parseFactor(TokenArray *tokens, char *fileContents) {
   }
 }
 
-ExprTree *parseTerm(TokenArray *tokens, char *fileContents) {
+ExprTree *parseTerm(TokenList *tokens, char *fileContents) {
   ExprTree *lhs = parseFactor(tokens, fileContents);
 
   while (current(tokens, fileContents).type == T_SLASH || current(tokens, fileContents).type == T_STAR) {
@@ -109,7 +147,7 @@ ExprTree *parseTerm(TokenArray *tokens, char *fileContents) {
   return lhs;
 }
 
-ExprTree *parseExpr(TokenArray *tokens, char *fileContents) {
+ExprTree *parseExpr(TokenList *tokens, char *fileContents) {
   ExprTree *lhs = parseTerm(tokens, fileContents);
 
   while (current(tokens, fileContents).type == T_PLUS || current(tokens, fileContents).type == T_MINUS) {
@@ -128,11 +166,11 @@ ExprTree *parseExpr(TokenArray *tokens, char *fileContents) {
   return lhs;
 }
 
-TType parseTypeSpecifier(TokenArray *tokens, char *fileContents) {
+TType parseTypeSpecifier(TokenList *tokens, char *fileContents) {
   return advance(tokens, fileContents).type;
 }
 
-char *parseIdentifier(TokenArray *tokens, char *fileContents) {
+char *parseIdentifier(TokenList *tokens, char *fileContents) {
   Token token = advance(tokens, fileContents);
   int len = token.filePosEnd - token.filePosStart;
   char *ident = malloc(len + 1);
@@ -141,7 +179,7 @@ char *parseIdentifier(TokenArray *tokens, char *fileContents) {
   return ident;
 }
 
-Statement parseStatement(TokenArray *tokens, char *fileContents) {
+Statement parseStatement(TokenList *tokens, char *fileContents) {
   // Return statement
   Token tok = expect(tokens, fileContents, K_RETURN, "Error: Expected 'return'");
   ExprTree *expr = parseExpr(tokens, fileContents);
@@ -152,7 +190,7 @@ Statement parseStatement(TokenArray *tokens, char *fileContents) {
   return statement;
 }
 
-AST *parseFunctionDeclaration(TokenArray *tokens, char *fileContents) {
+AST *parseFunctionDeclaration(TokenList *tokens, char *fileContents) {
   int returnType = parseTypeSpecifier(tokens, fileContents);
   char *functionName = parseIdentifier(tokens, fileContents);
 
@@ -165,8 +203,17 @@ AST *parseFunctionDeclaration(TokenArray *tokens, char *fileContents) {
   return makeFunctionDeclaration(returnType, functionName, statement);
 }
 
-AST *parseFile(TokenArray *tokens, char *fileContents) {
+AST *parseFile(TokenList *tokens, char *fileContents) {
   return parseFunctionDeclaration(tokens, fileContents);
+}
+
+void generateTAC(TACList *list, AST *ast) {
+  newTACList(list);
+
+  // Generate main
+  if (strcmp(ast->node.name, "main") == 0) {
+    // where do labels fit into our quadruples? more unions!
+  }
 }
 
 void printAST(AST *ast, int indent) {

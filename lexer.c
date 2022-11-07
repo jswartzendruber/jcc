@@ -45,32 +45,41 @@ Token createToken(TType type, int filePosStart, int filePosEnd) {
   return token;
 }
 
-void newTokenArrayList(TokenArray *array) {
+void newTokenList(TokenList *list) {
   int startingSize = 32;
-  array->data = malloc(sizeof(Token) * startingSize);
-  if (array->data == NULL) {
+  list->data = malloc(sizeof(Token) * startingSize);
+  if (list->data == NULL) {
     fprintf(stdout, "Error: Malloc failure.\n");
     exit(1);
   }
 
-  array->maxSize = startingSize;
-  array->current = 0;
-  array->len = 0;
+  list->maxSize = startingSize;
+  list->current = 0;
+  list->len = 0;
 }
 
-void deleteTokenArrayList(TokenArray *array) { free(array->data); }
+void freeTokenList(TokenList *list) { free(list->data); }
 
-void insert(TokenArray *array, Token token) {
-  if (array->len < array->maxSize) {
-    array->data[array->len++] = token;
+void insertTokenList(TokenList *list, Token token) {
+  if (list->len < list->maxSize) {
+    list->data[list->len++] = token;
   } else {
-    array->maxSize *= 2;
-    array->data = realloc(array->data, array->maxSize * sizeof(Token));
-    array->data[array->len++] = token;
-    if (array->data == NULL) {
+    list->maxSize *= 2;
+    list->data = realloc(list->data, list->maxSize * sizeof(Token));
+    list->data[list->len++] = token;
+    if (list->data == NULL) {
       fprintf(stdout, "Error: Realloc failure.\n");
       exit(1);
     }
+  }
+}
+
+Token getTokenList(TokenList *list, int idx) {
+  if (idx < list->len) {
+    return list->data[idx];
+  } else {
+    fprintf(stderr, "Panic: Array out of bounds!");
+    abort();
   }
 }
 
@@ -82,30 +91,20 @@ int getTokenIntValue(Token token, char *fileContents) {
   return strtol(buff, NULL, 10);
 }
 
-Token current(TokenArray *array, char *fileContents) {
+Token current(TokenList *list, char *fileContents) {
   /* printf("at: "); */
   /* printToken(array->data[array->current], fileContents); */
-  return get(array, array->current);
+  return getTokenList(list, list->current);
 }
 
-Token advance(TokenArray *array, char *fileContents) {
+Token advance(TokenList *list, char *fileContents) {
   /* printf("eat: "); */
   /* printToken(array->data[array->current], fileContents); */
-  Token currToken = get(array, array->current);
-  if (array->current < array->len) {
-    array->current++;
+  Token currToken = getTokenList(list, list->current);
+  if (list->current < list->len) {
+    list->current++;
   }
   return currToken;
-}
-
-Token get(TokenArray *array, int idx) {
-  if (idx < array->len) {
-    return array->data[idx];
-  } else {
-    return array->data[idx - 1];
-    /* fprintf(stderr, "Panic: Array out of bounds!"); */
-    /* abort(); */
-  }
 }
 
 int isDigit(char c) {
@@ -125,7 +124,7 @@ int matchKeyword(char *str) {
   return -1;
 }
 
-int tokenizeFile(TokenArray *array, char *file, long fileLen) {
+int tokenizeFile(TokenList *list, char *file, long fileLen) {
   long line = 1;
   long idx = 0;
   int errors = 0;
@@ -137,41 +136,41 @@ int tokenizeFile(TokenArray *array, char *file, long fileLen) {
       }
       idx++;
     } else if (file[idx] == '+') {
-      insert(array, createToken(T_PLUS, idx, idx + 1));
+      insertTokenList(list, createToken(T_PLUS, idx, idx + 1));
       idx++;
     } else if (file[idx] == '-') {
-      insert(array, createToken(T_MINUS, idx, idx + 1));
+      insertTokenList(list, createToken(T_MINUS, idx, idx + 1));
       idx++;
     } else if (file[idx] == '*') {
-      insert(array, createToken(T_STAR, idx, idx + 1));
+      insertTokenList(list, createToken(T_STAR, idx, idx + 1));
       idx++;
     } else if (file[idx] == '/') {
-      insert(array, createToken(T_SLASH, idx, idx + 1));
+      insertTokenList(list, createToken(T_SLASH, idx, idx + 1));
       idx++;
     } else if (file[idx] == '=') {
-      insert(array, createToken(T_EQUAL, idx, idx + 1));
+      insertTokenList(list, createToken(T_EQUAL, idx, idx + 1));
       idx++;
     } else if (file[idx] == ';') {
-      insert(array, createToken(T_SEMICOLON, idx, idx + 1));
+      insertTokenList(list, createToken(T_SEMICOLON, idx, idx + 1));
       idx++;
     } else if (file[idx] == '(') {
-      insert(array, createToken(T_LPAREN, idx, idx + 1));
+      insertTokenList(list, createToken(T_LPAREN, idx, idx + 1));
       idx++;
     } else if (file[idx] == ')') {
-      insert(array, createToken(T_RPAREN, idx, idx + 1));
+      insertTokenList(list, createToken(T_RPAREN, idx, idx + 1));
       idx++;
     } else if (file[idx] == '{') {
-      insert(array, createToken(T_LCURLY, idx, idx + 1));
+      insertTokenList(list, createToken(T_LCURLY, idx, idx + 1));
       idx++;
     } else if (file[idx] == '}') {
-      insert(array, createToken(T_RCURLY, idx, idx + 1));
+      insertTokenList(list, createToken(T_RCURLY, idx, idx + 1));
       idx++;
     } else if (isDigit(file[idx]) == 1) {
       long start = idx;
       while (idx < fileLen && isDigit(file[idx]) == 1) {
 	idx++;
       }
-      insert(array, createToken(T_INTEGER, start, idx));
+      insertTokenList(list, createToken(T_INTEGER, start, idx));
     } else if (isAlphanumeric(file[idx])) {
       long start = idx;
       while (idx < fileLen && (isAlphanumeric(file[idx]) || isDigit(file[idx]))) {
@@ -184,9 +183,9 @@ int tokenizeFile(TokenArray *array, char *file, long fileLen) {
       int keyword = matchKeyword(ident);
 
       if (keyword != -1)
-	insert(array, createToken(keyword, start, idx));
+	insertTokenList(list, createToken(keyword, start, idx));
       else
-	insert(array, createToken(T_IDENTIFIER, start, idx));
+	insertTokenList(list, createToken(T_IDENTIFIER, start, idx));
     } else {
       fprintf(stdout, "Lexer Error on line %ld: Unexpected character '%c'.\n", line, file[idx]);
       errors++;

@@ -33,8 +33,8 @@ void lexFile(char *path) {
   contents[fileSize] = '\0';
   fclose(file);
 
-  TokenArray tokens;
-  newTokenArrayList(&tokens);
+  TokenList tokens;
+  newTokenList(&tokens);
 
   int errors = tokenizeFile(&tokens, contents, fileSize);
   if (errors > 0) {
@@ -48,10 +48,15 @@ void lexFile(char *path) {
   /* printf("\n"); */
 
   AST *ast = parseFile(&tokens, contents);
-  printAST(ast, 0);
+  //printAST(ast, 0);
+
+  freeTokenList(&tokens);
+
+  TACList tacList;
+  generateTAC(&tacList, ast);
   freeAST(ast);
 
-  deleteTokenArrayList(&tokens);
+  freeTACList(&tacList);
   free(contents);
 }
 

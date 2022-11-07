@@ -17,7 +17,7 @@ typedef enum {
 } ExprNodeUnionType;
 
 typedef union {
-  long long int value;
+  long value;
   Operation op;
 } ExprNodeUnion;
 
@@ -52,28 +52,47 @@ typedef struct AST {
   FunctionDeclaration node;
 } AST;
 
-/*
+typedef struct VirtualRegister {
+  int id;
+} VirtualRegister;
+
+typedef union TACUnion {
+  VirtualRegister reg;
+  int integerConstant;
+} TACUnion;
+
+typedef enum TACType {
+  TACRegister,
+  TACInteger,
+} TACType;
+
+typedef struct TACValue {
+  TACUnion val;
+  TACType type;
+} TACValue;
+
 typedef struct Quadruple {
-  int target;
-  int op;
-  int arg1;
-  int arg2;
+  VirtualRegister target;
+  Operation op;
+  TACValue arg1;
+  TACValue arg2;
 } Quadruple;
 
-typedef struct TAC {
+typedef struct TACList {
   Quadruple *data;
   int maxSize;
   int current;
   int len;
-} TAC;
-*/
+} TACList;
 
+void generateTAC(TACList *list, AST *ast);
+void freeTACList(TACList *list);
 ExprTree *makeExprTree(ExprTree *left, Operation op, ExprTree *right);
 void printExprTree(ExprTree *tree, int indent);
 void printAST(AST *ast, int indent);
 void freeExprTree(ExprTree *tree);
 void freeAST(AST *ast);
-AST *parseFile(TokenArray *tokens, char *fileContents);
-ExprTree *parseExpr(TokenArray *tokens, char *fileContents);
+AST *parseFile(TokenList *tokens, char *fileContents);
+ExprTree *parseExpr(TokenList *tokens, char *fileContents);
 
 #endif
