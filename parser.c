@@ -207,12 +207,38 @@ AST *parseFile(TokenList *tokens, char *fileContents) {
   return parseFunctionDeclaration(tokens, fileContents);
 }
 
-/* TAC newTACQuad() { */
-/*   TAC value; */
-/*   Quadruple quad; */
+TAC newTACQuad(int targetRegister, Operation op, int reg1, int reg2) {
+  TAC value;
+  TACQuadruple quad;
+  quad.target = targetRegister;
+  quad.op = op;
+  TACOperandValue val1;
+  val1.val.regID = reg1;
+  val1.type = TACRegister;
+  quad.arg1 = val1;
+  TACOperandValue val2;
+  val2.val.regID = reg2;
+  val2.type = TACRegister;
+  quad.arg2 = val2;
+  value.val.quad = quad;
+  value.type = Quadruple;
 
-/*   return value; */
-/* } */
+  return value;
+}
+
+TAC newTACDouble(int targetRegister, int arg) {
+  TAC value;
+  TACDouble d;
+  d.target = targetRegister;
+  TACOperandValue val1;
+  val1.val.integerConstant = arg;
+  val1.type = TACInteger;
+  d.arg = val1;
+  value.type = Double;
+  value.val.doub = d;
+
+  return value;
+}
 
 TAC newTACLabel(char *label) {
   TAC value;
@@ -221,8 +247,68 @@ TAC newTACLabel(char *label) {
   return value;
 }
 
+void printTAC(TAC t) {
+  if (t.type == Label) {
+    printf("%s:\n", t.val.label);
+  } else if (t.type == Quadruple) {
+    char* opString;
+    if (t.val.quad.op == Add) {
+      opString = "+";
+    } else if (t.val.quad.op == Sub) {
+      opString = "-";
+    } else if (t.val.quad.op == Mul) {
+      opString = "*";
+    } else if (t.val.quad.op == Div) {
+      opString = "/";
+    } else {
+      opString = "?";
+    }
+
+    char arg1[32];
+    char arg2[32];
+    if (t.val.quad.arg1.type == TACRegister) {
+      sprintf(arg1, "_t%i", t.val.quad.arg1.val.regID);
+    } else if (t.val.quad.arg1.type == TACInteger) {
+      sprintf(arg1, "%i", t.val.quad.arg1.val.integerConstant);
+    }
+    if (t.val.quad.arg2.type == TACRegister) {
+      sprintf(arg2, "_t%i", t.val.quad.arg2.val.regID);
+    } else if (t.val.quad.arg1.type == TACInteger) {
+      sprintf(arg2, "%i", t.val.quad.arg2.val.integerConstant);
+    }
+
+    printf("_t%i = %s %s, %s\n", t.val.quad.target, opString, arg1, arg2);
+  } else if (t.type == Double) {
+    printf("_t%i = %i\n", t.val.doub.target, t.val.doub.arg.val.integerConstant);
+  }
+}
+
 void generateExprTAC(TACList *list, ExprTree *expr) {
+  /* TAC label = newTACLabel("Main"); */
+  /* TAC inter = newTACQuad(2, Div, 3, 4); */
+  /* printTAC(label); */
+  /* printTAC(inter); */
   printExprTree(expr, 0);
+  /* if (tree->node.type == Operator) { */
+  /*   if (tree->node.exprNode.op == Add) */
+  /*     printf("%*s+\n", indent, ""); */
+  /*   else if (tree->node.exprNode.op == Sub) */
+  /*     printf("%*s-\n", indent, ""); */
+  /*   else if (tree->node.exprNode.op == Mul) */
+  /*     printf("%*s*\n", indent, ""); */
+  /*   else if (tree->node.exprNode.op == Div) */
+  /*     printf("%*s/\n", indent, ""); */
+  /*   indent++; */
+  /*   printExprTree(tree->left, indent); */
+  /*   printExprTree(tree->right, indent); */
+  /* } else { */
+  /*   printf("%*s%li\n", indent, "", tree->node.exprNode.value); */
+  /* } */
+
+  // Create TACList, add to it.
+
+  /* TAC t = newTACDouble(0, 69); */
+  /* printTAC(t); */
 }
 
 void generateStatementTAC(TACList *list, Statement statement) {

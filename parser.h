@@ -52,12 +52,8 @@ typedef struct AST {
   FunctionDeclaration node;
 } AST;
 
-typedef struct VirtualRegister {
-  int id;
-} VirtualRegister;
-
 typedef union TACUnion {
-  VirtualRegister reg;
+  int regID;
   int integerConstant;
 } TACUnion;
 
@@ -71,8 +67,13 @@ typedef struct TACOperandValue {
   TACQuadrupleType type;
 } TACOperandValue;
 
+typedef struct TACDouble {
+  int target;
+  TACOperandValue arg;
+} TACDouble;
+
 typedef struct TACQuadruple {
-  VirtualRegister target;
+  int target;
   Operation op;
   TACOperandValue arg1;
   TACOperandValue arg2;
@@ -80,11 +81,13 @@ typedef struct TACQuadruple {
 
 typedef union TACValue {
   TACQuadruple quad;
+  TACDouble doub;
   char* label;
 } TACValue;
 
 typedef enum TACType {
   Quadruple,
+  Double,
   Label
 } TACType;
 
